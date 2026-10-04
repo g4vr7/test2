@@ -1,0 +1,85 @@
+plugins {
+    id 'idea'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'org.jetbrains.kotlin.jvm' version '2.0.0'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = 'penguin-server-forge'
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: 'official', version: minecraft_version
+
+    runs {
+        server {
+            workingDirectory project.file('run/server')
+            property 'forge.logging.console.level', 'info'
+            mods {
+                penguin_server_forge {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'Kotlin for Forge'
+        url = 'https://thedarkcolour.github.io/KotlinForForge/'
+        content { includeGroup 'thedarkcolour' }
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    implementation "thedarkcolour:kotlinforforge:${kff_version}"
+}
+
+processResources {
+    def props = [
+        mod_version: mod_version,
+        minecraft_version: minecraft_version,
+        forge_version: forge_version,
+        kff_version: kff_version
+    ]
+    inputs.properties props
+    filesMatching('META-INF/mods.toml') {
+        expand props
+    }
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = '17'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+jar {
+    from('LICENSE') {
+        rename { "${it}_penguin-server-forge" }
+    }
+    manifest {
+        attributes([
+            'Specification-Title': 'penguin_server_forge',
+            'Specification-Vendor': 'HuHoBot + community Forge port',
+            'Specification-Version': '1',
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.jar.archiveVersion,
+            'Implementation-Vendor': 'HuHoBot + community Forge port'
+        ])
+    }
+}
+
+jar.finalizedBy('reobfJar')
